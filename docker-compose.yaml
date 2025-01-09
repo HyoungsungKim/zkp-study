@@ -1,0 +1,10 @@
+version: "3.7"
+
+services:
+  zkp_research:
+    build: .  # Build dockerfile of current directory
+    working_dir: /app    
+    volumes:
+      - ./:/app
+    stdin_open: true
+    tty: true
