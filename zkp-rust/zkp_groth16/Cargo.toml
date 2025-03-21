@@ -1,0 +1,25 @@
+[package]
+name = "ark_circom_test"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+# ------------------------------------
+# ark-circom (0.5) : Circom + Arkworks
+# ------------------------------------
+ark-circom = { version = "0.5.0" } 
+# ↑ 여기서 특별히 "features = [\"wasm\"]"를 켜지 마세요!
+#   디폴트 features는 wasmer의 sys 모드(네이티브 환경)만 활성화합니다.
+
+# 아래는 arkworks 생태계 기본
+ark-std = "0.5.0"
+ark-ff = "0.5.0"
+ark-ec = "0.5.0"
+ark-bn254 = "0.5.0"
+ark-groth16 = "0.5.0"
+ark-crypto-primitives = "0.5.0"
+ark_plonk = "0.5.0"
+
+# (선택) 에러 핸들링, 비동기
+color-eyre = "0.6"
+tokio = { version = "1.29", features = ["macros"] }

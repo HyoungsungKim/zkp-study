@@ -1,0 +1,23 @@
+# Rust 관련 파일 및 디렉토리
+**/target/
+**/*.rs.bk
+Cargo.lock  # 프로젝트에 따라 포함 여부 결정 (라이브러리라면 제외, 애플리케이션이라면 포함 가능)
+
+# npm(Node.js) 관련 파일 및 디렉토리
+/node_modules/
+/dist/
+/build/
+npm-debug.log
+yarn-error.log
+package-lock.json  # 프로젝트에 따라 포함 여부 결정 (yarn 사용 시 제외 가능)
+yarn.lock  # 프로젝트에 따라 포함 여부 결정 (npm 사용 시 제외 가능)
+
+# 기타 일반적인 제외 파일
+*.log
+*.tmp
+*.swp
+.DS_Store
+.env
+.idea/
+.vscode/
+*.code-workspace
