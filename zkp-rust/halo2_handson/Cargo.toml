@@ -1,0 +1,10 @@
+[package]
+name = "halo2_handson"
+version = "0.1.0"
+edition = "2024"
+
+[dependencies]
+halo2_proofs = { git = "https://github.com/zcash/halo2.git", branch = "main" }
+pasta_curves = "0.5"
+group = "0.13"
+rand_core = { version = "0.6", default-features = false }
