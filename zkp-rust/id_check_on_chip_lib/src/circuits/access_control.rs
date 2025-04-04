@@ -13,14 +13,14 @@ use group::ff::PrimeField;
 use crate::constants::MAX_COUNTRY_NUMBER;
 
 #[derive(Default, Clone)]
-struct AccessControlCircuit<F: PrimeField> {
-    prover_age: Value<F>,           // for age check
-    prover_gender: Value<F>,          // for gender check
-    prover_country_code: Value<F>,     // for nationality check
+pub struct AccessControlCircuit<F: PrimeField> {
+    pub prover_age: Value<F>,           // for age check
+    pub prover_gender: Value<F>,          // for gender check
+    pub prover_country_code: Value<F>,     // for nationality check
 }
 
 #[derive(Clone)]
-struct AccessControlCircuitConfig {
+pub struct AccessControlCircuitConfig {
     age_check_config: AgeCheckConfig,
     gender_check_config: GenderCheckConfig,
     nationality_check_config: NationalityCheckConfig,  // Add this line for nationality check config
