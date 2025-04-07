@@ -733,7 +733,6 @@ version = "0.1.0"
 dependencies = [
  "group",
  "halo2_gadgets",
- "halo2_poseidon",
  "halo2_proofs",
  "pasta_curves",
  "rand_core",
