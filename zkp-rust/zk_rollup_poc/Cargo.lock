@@ -734,6 +734,18 @@ dependencies = [
 ]
 
 [[package]]
+name = "zk_rollup_poc"
+version = "0.1.0"
+dependencies = [
+ "group",
+ "halo2_gadgets",
+ "halo2_proofs",
+ "pasta_curves",
+ "rand_core",
+ "zk_rollup_poc_lib",
+]
+
+[[package]]
 name = "zk_rollup_poc_lib"
 version = "0.1.0"
 dependencies = [

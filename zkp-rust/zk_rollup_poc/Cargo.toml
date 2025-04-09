@@ -1,12 +1,12 @@
 [package]
-name = "zk_rollup_poc_lib"
+name = "zk_rollup_poc"
 version = "0.1.0"
 edition = "2024"
 
 [dependencies]
+zk_rollup_poc_lib = { path = "../zk_rollup_poc_lib" }
 halo2_proofs = { git = "https://github.com/zcash/halo2.git", package = "halo2_proofs", branch = "main", features = ["dev-graph"] }
 halo2_gadgets = { git = "https://github.com/zcash/halo2.git", package = "halo2_gadgets", branch = "main" }
 pasta_curves = "0.5"
 group = "0.13"
-array-init = "2.0"
 rand_core = { version = "0.6", default-features = false }

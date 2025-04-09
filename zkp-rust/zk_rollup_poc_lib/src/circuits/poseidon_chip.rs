@@ -7,11 +7,13 @@ use halo2_gadgets::poseidon::{Hash, Pow5Chip, Pow5Config};
 use halo2_gadgets::poseidon::primitives::{Spec, ConstantLength};
 use std::convert::TryInto;
 
+use crate::constants::POSEIDON_RATE;
+
 
 #[derive(Debug, Clone)]
 pub struct PoseidonConfig<const WIDTH: usize, const RATE: usize, const L: usize> {
-    inputs: Vec<Column<Advice>>,
-    pow5_config: Pow5Config<Fp, WIDTH, RATE>,
+    pub inputs: Vec<Column<Advice>>,
+    pub pow5_config: Pow5Config<Fp, WIDTH, RATE>,
 }
 
 #[derive(Debug, Clone)]
@@ -21,7 +23,7 @@ pub struct PoseidonChip<
     const RATE: usize,
     const L: usize,
 > {
-    config: PoseidonConfig<WIDTH, RATE, L>,
+    pub config: PoseidonConfig<WIDTH, RATE, L>,
     _marker: std::marker::PhantomData<S>,
 }
 
@@ -60,7 +62,7 @@ impl<S: Spec<Fp, WIDTH, RATE>, const WIDTH: usize, const RATE: usize, const L: u
     pub fn hash(
         &self,
         mut layouter: impl Layouter<Fp>,
-        words: &[AssignedCell<Fp, Fp>; L],
+        words: &[AssignedCell<Fp, Fp>; POSEIDON_RATE],
     ) -> Result<AssignedCell<Fp, Fp>, Error> {
         let pow5_chip = Pow5Chip::construct(self.config.pow5_config.clone());
         let word_cells = layouter.assign_region(
@@ -114,6 +116,24 @@ impl<S: Spec<Fp, WIDTH, RATE>, const WIDTH: usize, const RATE: usize, const L: u
             )?;
         }
         Ok(())
+    }
+
+    pub fn assign_constant(
+        &self,
+        layouter: &mut impl Layouter<Fp>,
+        value: Fp,
+    ) -> Result<AssignedCell<Fp, Fp>, Error> {
+        layouter.assign_region(
+            || "assign constant",
+            |mut region| {
+                region.assign_advice(
+                    || "constant value",
+                    self.config.inputs[0], // 아무 컬럼
+                    0,
+                    || Value::known(value),
+                )
+            },
+        )
     }
 }
 
