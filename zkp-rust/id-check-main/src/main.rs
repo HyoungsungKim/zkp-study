@@ -1,7 +1,6 @@
-use halo2_proofs::transcript;
 use halo2_proofs::{
     pasta::{Fp, EqAffine},
-    plonk::{keygen_vk, keygen_pk, create_proof, verify_proof, Circuit},
+    plonk::{keygen_vk, keygen_pk, create_proof, verify_proof},
     poly::commitment::Params,
     transcript::{Blake2bWrite, Blake2bRead, Challenge255},
     circuit::Value,
@@ -10,13 +9,13 @@ use halo2_proofs::{
 use std::time::Instant;
 use rand_core::OsRng;
 
-use id_check_on_chip_lib::circuits::access_control::AccessControlCircuit; 
+use id_check_on_chip_lib::circuits::access_control::{AccessControlCircuit, Input}; 
 
 fn main() {
     let circuit = AccessControlCircuit {
-        prover_age: Value::known(Fp::from(20)),
-        prover_gender: Value::known(Fp::from(1)),
-        prover_country_code: Value::known(Fp::from(410)),
+        prover_age: Input::Present(Value::known(Fp::from(20))),
+        prover_gender: Input::Present(Value::known(Fp::from(1))),
+        prover_country_code: Input::Present(Value::known(Fp::from(410))),
     };
 
     let public_inputs: Vec<Vec<Fp>> = vec![
@@ -36,7 +35,7 @@ fn main() {
 
     let public_inputs_refs: Vec<&[Fp]> = public_inputs.iter().map(|v| &**v).collect();
 
-    let k = 8;
+    let k = 7;
     let params: Params<EqAffine> = Params::new(k);
 
     let vk = keygen_vk(&params, &circuit).expect("keygen_vk should not fail");
@@ -68,7 +67,7 @@ fn main() {
         &mut verifier_transcript,
     )
     .expect("verification should not fail");
-    println!("Proof verified successfully!");
+    println!("Proof verified successfully in {:?}!", start.elapsed());
 
 
 }

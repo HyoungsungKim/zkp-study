@@ -32,10 +32,11 @@ impl<F: PrimeField> NationalityCheckChip<F> {
 
     pub fn configure(
         meta: &mut ConstraintSystem<F>,
-        prover_country_code: Column<Advice>,
-        flag: Column<Advice>,
-        required: Column<Advice>,
     ) -> NationalityCheckConfig {
+        let prover_country_code = meta.advice_column();
+        let flag = meta.advice_column();
+        let required = meta.advice_column();
+
         meta.enable_equality(prover_country_code);
         meta.enable_equality(flag);
         meta.enable_equality(required);
@@ -127,11 +128,7 @@ mod tests {
         }
     
         fn configure(meta: &mut ConstraintSystem<F>) -> Self::Config {
-            let prover_code = meta.advice_column();
-            let flag = meta.advice_column();
-            let required = meta.advice_column();
-    
-            NationalityCheckChip::configure(meta, prover_code, flag, required)
+            NationalityCheckChip::configure(meta)
         }
 
         fn synthesize(&self, config: Self::Config, mut layouter: impl Layouter<F>) -> Result<(), Error> {

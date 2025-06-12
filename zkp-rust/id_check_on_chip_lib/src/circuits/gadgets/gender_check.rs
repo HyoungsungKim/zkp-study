@@ -28,11 +28,11 @@ impl <F: Field> GenderCheckChip<F> {
 
     pub fn configure(
         meta: &mut ConstraintSystem<F>,
-        gender: Column<Advice>,
-        gender_check_flag_advice: Column<Advice>,
-        required_gender_advice: Column<Advice>,
     ) -> GenderCheckConfig {
         let selector = meta.selector();
+        let gender = meta.advice_column();
+        let gender_check_flag_advice = meta.advice_column();
+        let required_gender_advice = meta.advice_column();
 
         meta.enable_equality(gender);
         meta.enable_equality(gender_check_flag_advice);
@@ -71,26 +71,6 @@ impl <F: Field> GenderCheckChip<F> {
     
         Ok(())
     }
-    /* 
-    pub fn assign(
-        &self,
-        mut layouter: impl Layouter<F>,
-        gender: Value<F>,
-        flag: Value<F>,
-        required_gender: Value<F>,
-    ) -> Result<(), Error> {
-        let config = &self.config;
-        layouter.assign_region(
-            || "gender check region",
-            |mut region| {
-                self.config.selector.enable(&mut region, 0)?;
-                region.assign_advice(|| "gender", config.gender, 0, || gender)?;
-                region.assign_advice(|| "flag", config.gender_check_flag_advice, 0, || flag)?;               
-                region.assign_advice(|| "required_gender", config.required_gender_advice, 0, || required_gender)?;
-                Ok(())
-            }
-        )
-    }*/
 }
 
 
@@ -118,10 +98,7 @@ mod tests {
         }
 
         fn configure(meta: &mut ConstraintSystem<F>) -> Self::Config {
-            let gender  = meta.advice_column();
-            let gender_check_flag_advice = meta.advice_column();
-            let required_gender_check_advice = meta.advice_column();
-            GenderCheckChip::configure(meta, gender, gender_check_flag_advice, required_gender_check_advice) // 또는 필요한 인자 넘겨주기
+            GenderCheckChip::configure(meta) // 또는 필요한 인자 넘겨주기
         }
 
         fn synthesize(&self, config: Self::Config, mut layouter: impl halo2_proofs::circuit::Layouter<F>) -> Result<(), Error> {

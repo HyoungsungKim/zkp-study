@@ -4,19 +4,45 @@ use gadgets::gender_check::*;
 use gadgets::nationality_check::*;
 
 use halo2_proofs::{
-    circuit::{Layouter, SimpleFloorPlanner, Value},
+    circuit::{ Layouter, SimpleFloorPlanner, Value},
     plonk::{ Circuit, Column, ConstraintSystem, Error, Instance},
 };
 
 use group::ff::PrimeField;
 
 use crate::constants::MAX_COUNTRY_NUMBER;
+const DUMMY_VAL: i64 = -1;
 
-#[derive(Default, Clone)]
+#[derive(Clone)]
+pub enum Input<F: PrimeField> {
+    Present(Value<F>),
+    Absent,
+}
+
+impl<F: PrimeField> Input<F> {
+    pub fn resolve_or_dummy(&self, dummy:F) -> Value<F> {
+        match self {
+            Input::Present(value) => *value,
+            Input::Absent => Value::known(dummy),
+        }
+    }
+}
+
+#[derive(Clone)]
 pub struct AccessControlCircuit<F: PrimeField> {
-    pub prover_age: Value<F>,           // for age check
-    pub prover_gender: Value<F>,          // for gender check
-    pub prover_country_code: Value<F>,     // for nationality check
+    pub prover_age: Input<F>,           // for age check
+    pub prover_gender: Input<F>,          // for gender check
+    pub prover_country_code: Input<F>,     // for nationality check
+}
+
+impl<F: PrimeField> Default for AccessControlCircuit<F> {
+    fn default() -> Self {
+        Self {
+            prover_age: Input::Absent,
+            prover_gender: Input::Absent,
+            prover_country_code: Input::Absent,
+        }
+    }
 }
 
 #[derive(Clone)]
@@ -93,9 +119,9 @@ impl <F: PrimeField> Circuit<F> for AccessControlCircuit<F> {
         meta.enable_equality(required_country_codes_advice);
 
         // === Configuration Structs for Each Check ===
-        let age_check_config =  AgeCheckChip::configure(meta, age, age_check_flag_advice, required_age_advice);
-        let gender_check_config =  GenderCheckChip::configure(meta, gender, gender_check_flag_advice, required_gender_advice);
-        let nationality_check_config =   NationalityCheckChip::configure(meta, prover_country_code, nationality_check_flag_advice, required_country_codes_advice);
+        let age_check_config =  AgeCheckChip::configure(meta);
+        let gender_check_config =  GenderCheckChip::configure(meta);
+        let nationality_check_config =   NationalityCheckChip::configure(meta);
 
         AccessControlCircuitConfig {
             age_check_config,
@@ -145,7 +171,7 @@ impl <F: PrimeField> Circuit<F> for AccessControlCircuit<F> {
                     || "age",
                     age_check_chip.config.age,
                     0,
-                    || self.prover_age,
+                    || self.prover_age.resolve_or_dummy(F::from(DUMMY_VAL as u64)),
                 )?;
         
                 // Call assign directly with region
@@ -168,7 +194,7 @@ impl <F: PrimeField> Circuit<F> for AccessControlCircuit<F> {
                 || "gender",
                 gender_check_chip.config.gender,
                 0,
-                || self.prover_gender,
+                || self.prover_gender.resolve_or_dummy(F::from(DUMMY_VAL as u64)),
             )?; 
 
             let flag_cell = region.assign_advice_from_instance(
@@ -205,7 +231,7 @@ impl <F: PrimeField> Circuit<F> for AccessControlCircuit<F> {
                 || "nationality",
                 nationality_check_chip.config.prover_country_code,
                 0,
-                || self.prover_country_code,
+                || self.prover_country_code.resolve_or_dummy(F::from(DUMMY_VAL as u64)),
             )?; 
 
             let flag_cell = region.assign_advice_from_instance(
@@ -241,6 +267,8 @@ impl <F: PrimeField> Circuit<F> for AccessControlCircuit<F> {
     }
 }
 
+
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -260,9 +288,9 @@ mod tests {
         should_succeed: bool,
     ) {
         let circuit = AccessControlCircuit {
-            prover_age: Value::known(Fp::from(age)),
-            prover_gender: Value::known(Fp::from(gender)),
-            prover_country_code: Value::known(Fp::from(country_code)),
+            prover_age: Input::Present(Value::known(Fp::from(age))),
+            prover_gender: Input::Present(Value::known(Fp::from(gender))),
+            prover_country_code: Input::Present(Value::known(Fp::from(country_code))),
         };
 
         let mut allowed_countries_fp = allowed_countries
@@ -351,4 +379,87 @@ mod tests {
             true
         );
     }
+
+    #[test]
+    fn test_absent_input_with_flag_off_should_pass() {
+        let circuit = AccessControlCircuit {
+            prover_age: Input::Absent,
+            prover_gender: Input::Absent,
+            prover_country_code: Input::Absent,
+        };
+
+        let mut allowed_countries_fp = vec![Fp::from(410)];
+        while allowed_countries_fp.len() < MAX_COUNTRY_NUMBER {
+            allowed_countries_fp.push(Fp::zero());
+        }
+
+        let public_inputs = vec![
+            vec![Fp::from(0)],  // age check flag off
+            vec![Fp::from(18)],
+            vec![Fp::from(0)],  // gender check flag off
+            vec![Fp::from(1)],
+            vec![Fp::from(0)],  // nationality check flag off
+            allowed_countries_fp,
+        ];
+
+        let prover = MockProver::run(8, &circuit, public_inputs).unwrap();
+        prover.assert_satisfied();  // ✅ Pass expected
+    }
+
+    #[test]
+    fn test_absent_input_with_flag_on_should_fail() {
+        let circuit = AccessControlCircuit {
+            prover_age: Input::Absent,
+            prover_gender: Input::Absent,
+            prover_country_code: Input::Absent,
+        };
+
+        let mut allowed_countries_fp = vec![Fp::from(410)];
+        while allowed_countries_fp.len() < MAX_COUNTRY_NUMBER {
+            allowed_countries_fp.push(Fp::zero());
+        }
+
+        let public_inputs = vec![
+            vec![Fp::from(1)],  // age check flag ON
+            vec![Fp::from(18)],
+            vec![Fp::from(1)],  // gender check flag ON
+            vec![Fp::from(1)],
+            vec![Fp::from(1)],  // nationality check flag ON
+            allowed_countries_fp,
+        ];
+
+        let prover = MockProver::run(8, &circuit, public_inputs).unwrap();
+        assert!(
+            prover.verify().is_err(),
+            "Expected failure due to Absent inputs with flags ON"
+        );
+    }
+
+    #[test]
+    fn test_mixed_input_with_some_flags_off_should_pass() {
+        let circuit = AccessControlCircuit {
+            prover_age: Input::Present(Value::known(Fp::from(25))),
+            prover_gender: Input::Absent,
+            prover_country_code: Input::Absent,
+        };
+
+        let mut allowed_countries_fp = vec![Fp::from(410)];
+        while allowed_countries_fp.len() < MAX_COUNTRY_NUMBER {
+            allowed_countries_fp.push(Fp::zero());
+        }
+
+        let public_inputs = vec![
+            vec![Fp::from(1)],  // age check ON
+            vec![Fp::from(18)],
+            vec![Fp::from(0)],  // gender check OFF
+            vec![Fp::from(1)],
+            vec![Fp::from(0)],  // nationality check OFF
+            allowed_countries_fp,
+        ];
+
+        let prover = MockProver::run(8, &circuit, public_inputs).unwrap();
+        prover.assert_satisfied();
+    }
+
+
 }

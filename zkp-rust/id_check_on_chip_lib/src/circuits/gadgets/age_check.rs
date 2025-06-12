@@ -32,10 +32,11 @@ impl <F: PrimeField> AgeCheckChip<F> {
 
     pub fn configure(
         meta: &mut ConstraintSystem<F>,
-        age: Column<Advice>,
-        age_check_flag_advice: Column<Advice>, // To handle the flag value in advice column.
-        required_age_advice: Column<Advice>, 
     ) -> AgeCheckConfig  {
+        let age = meta.advice_column();
+        let age_check_flag_advice = meta.advice_column();
+        let required_age_advice = meta.advice_column();  // To handle the required_age value in advice column.  // To handle the flag value in advice column. 
+
         let selector = meta.selector();
 
         meta.enable_equality(age);
@@ -80,30 +81,6 @@ impl <F: PrimeField> AgeCheckChip<F> {
     
         Ok(())
     }
-    /* 
-    pub fn assign(
-        &self,
-        mut layouter: impl Layouter<F>,
-        region: &mut Region<'_, F>,
-        age: Value<F>,
-        flag: Value<F>,
-        required_age: Value<F>,
-    ) -> Result<(), Error> {
-        let config = &self.config;
-
-        layouter.assign_region(
-            || "age check region",
-            |mut region| {
-                self.config.selector.enable(&mut region, 0)?;
-
-                region.assign_advice(|| "age", config.age, 0, || age)?;
-                region.assign_advice(|| "flag", config.age_check_flag_advice, 0, || flag)?;
-                region.assign_advice(|| "required_age", config.required_age_advice, 0, || required_age)?;
-
-                Ok(())
-            }
-        )
-        */
 }
 
 
@@ -131,10 +108,7 @@ mod tests {
         }
 
         fn configure(meta: &mut ConstraintSystem<F>) -> Self::Config {
-            let age  = meta.advice_column();
-            let flag = meta.advice_column();
-            let required_age = meta.advice_column();
-            AgeCheckChip::configure(meta, age, flag, required_age) // 또는 필요한 인자 넘겨주기
+            AgeCheckChip::configure(meta) // 또는 필요한 인자 넘겨주기
         }
 
         fn synthesize(&self, config: Self::Config, mut layouter: impl Layouter<F>) -> Result<(), Error> {
